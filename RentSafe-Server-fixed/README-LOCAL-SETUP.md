@@ -2,8 +2,8 @@
 
 ## Important port distinction
 
-- Express / RentSafe API: `http://localhost:4000` (`PORT=4000`)
-- PostgreSQL: `localhost:5432` (`DB_PORT=5432`)
+- Express / RentSafe API: `http://localhost:********` (`PORT=*******`)
+- PostgreSQL: `localhost:******` (`DB_PORT=********`)
 
 The server reads `.env`, not `.env.example`. Create `.env` from `.env.example` and edit that file.
 
@@ -16,7 +16,7 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-Set `DB_PASS` to the password for your local PostgreSQL user. Replace the JWT values with long random strings. Keep `PORT=4000` and `DB_PORT=5432` unless you deliberately use different ports.
+Set `DB_PASS` to the password for your local PostgreSQL user. Replace the JWT values with long random strings. Keep `PORT=******` and `DB_PORT=******` unless you deliberately use different ports.
 
 If you previously set a PowerShell environment variable named `PORT`, remove it for this session so `.env` takes effect:
 
@@ -32,10 +32,10 @@ If you set `PORT` in Windows User or System environment variables, remove or upd
 npm install
 ```
 
-Make sure the PostgreSQL service is running and the database named in `DB_NAME` exists. For the example configuration, create `Dwellvibes` if it does not exist:
+Make sure the PostgreSQL service is running and the database named in `DB_NAME` exists. For the example configuration, create `**ell**be*` if it does not exist:
 
 ```powershell
-& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -c "CREATE DATABASE Dwellvibes;"
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -c "CREATE DATABASE **llv**e*;"
 ```
 
 If PostgreSQL reports that the database already exists, that is fine.
@@ -55,9 +55,9 @@ Run these commands from the folder containing `package.json`, not from a differe
 
 Open these URLs:
 
-- `http://localhost:4000/` — web application
-- `http://localhost:4000/health` — API process health and configured API port
-- `http://localhost:4000/health/db` — database connection test
+- `http://localhost:*******/` — web application
+- `http://localhost:*******/health` — API process health and configured API port
+- `http://localhost:*******/health/db` — database connection test
 
 A successful `/health` with a failing `/health/db` means Express is running but the PostgreSQL connection settings/password/database need correction.
 
