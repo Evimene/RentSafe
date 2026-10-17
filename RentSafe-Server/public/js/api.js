@@ -51,4 +51,35 @@ export const api = {
   adminAudit: (t, params) =>
     request(`/admin/audit?${new URLSearchParams(params).toString()}`, { token: t }),
   adminRejectionReasons: (t) => request('/admin/rejection-reasons', { token: t }),
+
+
+
+  // ---- Host ----
+hostListings: (t, status = 'all') =>
+  request(`/host/listings?status=${status}`, { token: t }),
+hostCreateListing: (t, body) =>
+  request('/host/listings', { method: 'POST', body, token: t }),
+hostGetListing: (t, id) => request(`/host/listings/${id}`, { token: t }),
+hostUpdateListing: (t, id, body) =>
+  request(`/host/listings/${id}`, { method: 'PATCH', body, token: t }),
+hostSubmitListing: (t, id) =>
+  request(`/host/listings/${id}/submit`, { method: 'POST', token: t }),
+hostArchiveListing: (t, id) =>
+  request(`/host/listings/${id}/archive`, { method: 'POST', token: t }),
+hostSetAvailability: (t, id, body) =>
+  request(`/host/listings/${id}/availability`, { method: 'POST', body, token: t }),
+hostUploadPhotos: (t, id, formData) =>
+  request(`/host/listings/${id}/media`, { method: 'POST', body: formData, token: t, isForm: true }),
+hostDeletePhoto: (t, id, mediaId) =>
+  request(`/host/listings/${id}/media/${mediaId}`, { method: 'DELETE', token: t }),
+hostSetCover: (t, id, mediaId) =>
+  request(`/host/listings/${id}/media/${mediaId}/cover`, { method: 'POST', token: t }),
+
+// ---- Public listings ----
+searchListings: (t, params) =>
+  request(`/listings/search?${new URLSearchParams(params).toString()}`, { token: t }),
+getListing: (t, id) => request(`/listings/${id}`, { token: t }),
+
 };
+
+
