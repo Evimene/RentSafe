@@ -48,6 +48,9 @@ function Header() {
               },
             }, 'Admin')
             : null,
+
+          h('button', { class: 'link', onclick: () => { setState({ route: 'browse' }); runSearch(); } }, 'Browse'),
+          h('button', { class: 'link', onclick: () => { setState({ route: 'host' }); loadHostListings(); } }, 'Hosting'),
           h('span', {}, user?.firstName || 'User'),
           h('button', {
             class: 'link',
@@ -330,8 +333,13 @@ function App() {
     switch (admin.view) {
       case 'kyc_detail': screen = AdminKycDetail(); break;
       case 'audit': screen = AdminAudit(); break;
+      case 'host': screen = HostDashboard(); break;
+      case 'browse': screen = getState().browse.view === 'detail'
+        ? ListingDetail() : BrowseScreen();
+        break;
       case 'kyc_list':
       default: screen = AdminKycList();
+
     }
     return AdminShell({ children: screen });
   }
