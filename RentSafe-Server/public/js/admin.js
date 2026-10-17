@@ -65,7 +65,8 @@ export function AdminShell({ children }) {
       h('div', { class: 'admin-brand' }, 'RentSafe', h('span', { class: 'admin-tag' }, 'Admin')),
       h('nav', {},
         navItem('kyc_list', 'KYC queue', admin.stats?.pending || 0),
-        navItem('audit', 'Audit log')
+        navItem('audit', 'Audit log'),
+        navItem('listing_list', 'Listings', admin.listings?.total || 0),
       ),
       h('div', { class: 'admin-me' },
         h('div', { class: 'avatar' }, initials(user)),

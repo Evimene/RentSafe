@@ -337,6 +337,13 @@ function App() {
       case 'browse': screen = getState().browse.view === 'detail'
         ? ListingDetail() : BrowseScreen();
         break;
+      case 'listing_list':
+        screen = AdminListings();
+        if (!admin.listings) loadAdminListings();
+        break;
+      case 'listing_detail':
+        screen = AdminListingDetail();
+        break;
       case 'kyc_list':
       default: screen = AdminKycList();
 
