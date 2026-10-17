@@ -12,6 +12,9 @@ import { notFound, errorHandler } from './middleware/error.js';
 import webhookRoutes from './routes/webhook.routes.js';
 import escrowRoutes from './routes/escrow.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import hostRoutes from './routes/host.routes.js';
+import listingRoutes from './routes/listing.routes.js';
+import adminListingRoutes from './routes/adminListing.routes.js';
 
 fs.mkdirSync(config.uploads.dir, { recursive: true });
 
@@ -48,6 +51,9 @@ app.use('/api/kyc', kycRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/escrow', escrowRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/host',              hostRoutes);
+app.use('/api/listings',          listingRoutes);
+app.use('/api/admin/listings',    adminListingRoutes);
 
 
 app.use(notFound);
