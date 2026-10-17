@@ -46,6 +46,28 @@ export const store = createStore({
       loading: false,
     },
   },
+
+
+  browse: {
+    view: 'list',        // 'list' | 'detail'
+    filters: {
+      city: 'Lagos',
+      checkIn: '', checkOut: '', guests: '1',
+    },
+    results: [],
+    current: null,
+    currentId: null,
+    page: 1,
+    pageSize: 12,
+    loading: false,
+    error: null,
+  },
+  host: {
+    listings: [],
+    wizard: { open: false, step: 1, listingId: null, data: {}, photos: [], uploading: false },
+    error: null,
+    flash: null,
+  },
 });
 
 export const setState = (patch) => store.set(patch);
