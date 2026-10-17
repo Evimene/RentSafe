@@ -6,14 +6,13 @@ import { api } from './api.js';
    Helpers
    ============================================================ */
 
-const fmtDate = (iso) => {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleString('en-NG', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
-};
+const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('en-NG', {
+  day: '2-digit', month: 'short', year: 'numeric',
+}) : '—';
+
+const fmtN = (kobo) =>
+  kobo == null ? '—' : `₦${(Number(kobo) / 100).toLocaleString('en-NG')}`;
+
 
 const initials = (u) =>
   `${(u?.firstName || '?')[0] || '?'}${(u?.lastName || '?')[0] || '?'}`.toUpperCase();
@@ -54,7 +53,7 @@ export function AdminShell({ children }) {
           },
         });
         if (key === 'kyc_list') loadKycList();
-        if (key === 'audit')    loadAudit();
+        if (key === 'audit') loadAudit();
       },
     },
       h('span', {}, label),
@@ -79,7 +78,7 @@ export function AdminShell({ children }) {
         class: 'link',
         style: { marginTop: '12px' },
         onclick: async () => {
-          try { await api.logout({ refreshToken: getState().refreshToken }); } catch {}
+          try { await api.logout({ refreshToken: getState().refreshToken }); } catch { }
           localStorage.removeItem('refreshToken');
           setState({
             accessToken: null, refreshToken: null, user: null, route: 'login',
@@ -110,9 +109,9 @@ function StatsStrip() {
     );
   return h('div', { class: 'stats' },
     Card('Pending review', s.pending ?? 0, 'warn'),
-    Card('Verified',       s.verified ?? 0, 'ok'),
-    Card('Rejected',       s.rejected ?? 0, 'bad'),
-    Card('Last 24h',       s.last_24h ?? 0, '')
+    Card('Verified', s.verified ?? 0, 'ok'),
+    Card('Rejected', s.rejected ?? 0, 'bad'),
+    Card('Last 24h', s.last_24h ?? 0, '')
   );
 }
 
@@ -219,20 +218,20 @@ export function AdminKycList() {
       : list.items.length === 0
         ? EmptyState({ title: 'Nothing in this queue', subtitle: 'Try a different filter.' })
         : h('div', { class: 'table-wrap' },
-            h('table', { class: 'data-table' },
-              h('thead', {},
-                h('tr', {},
-                  h('th', {}, 'User'),
-                  h('th', {}, 'ID type'),
-                  h('th', {}, 'Status'),
-                  h('th', {}, 'Provider'),
-                  h('th', {}, 'Submitted'),
-                  h('th', {}, 'Documents')
-                )
-              ),
-              h('tbody', {}, rows)
-            )
-          ),
+          h('table', { class: 'data-table' },
+            h('thead', {},
+              h('tr', {},
+                h('th', {}, 'User'),
+                h('th', {}, 'ID type'),
+                h('th', {}, 'Status'),
+                h('th', {}, 'Provider'),
+                h('th', {}, 'Submitted'),
+                h('th', {}, 'Documents')
+              )
+            ),
+            h('tbody', {}, rows)
+          )
+        ),
     h('div', { class: 'pager' },
       h('button', {
         class: 'btn ghost', disabled: list.page <= 1,
@@ -276,38 +275,38 @@ export function AdminKycDetail() {
         revealed[field]
           ? h('span', { class: 'chip reveal' }, 'revealed')
           : h('button', {
-              class: 'btn tiny',
-              onclick: async () => {
-                try {
-                  const res = await api.adminReveal(getState().accessToken, k.id, field);
-                  setState({
-                    admin: {
-                      ...admin,
-                      detail: {
-                        ...d,
-                        revealedFields: { ...revealed, [field]: true },
-                        data: field === 'verified_data'
-                          ? { ...k, verifiedData: res.value }
-                          : k,
-                      },
+            class: 'btn tiny',
+            onclick: async () => {
+              try {
+                const res = await api.adminReveal(getState().accessToken, k.id, field);
+                setState({
+                  admin: {
+                    ...admin,
+                    detail: {
+                      ...d,
+                      revealedFields: { ...revealed, [field]: true },
+                      data: field === 'verified_data'
+                        ? { ...k, verifiedData: res.value }
+                        : k,
                     },
-                  });
-                } catch (err) {
-                  setState({ admin: { ...admin, error: err.message } });
-                }
-              },
-            }, 'Reveal (audited)')
+                  },
+                });
+              } catch (err) {
+                setState({ admin: { ...admin, error: err.message } });
+              }
+            },
+          }, 'Reveal (audited)')
       ),
       h('div', { class: 'sensitive-body' }, children)
     );
 
   const kv = k.verifiedData && Object.keys(k.verifiedData).length
     ? Object.entries(k.verifiedData).map(([key, val]) =>
-        h('div', { class: 'kv' },
-          h('span', { class: 'kv-k' }, key),
-          h('span', { class: 'kv-v' }, typeof val === 'object' ? JSON.stringify(val) : String(val))
-        )
+      h('div', { class: 'kv' },
+        h('span', { class: 'kv-k' }, key),
+        h('span', { class: 'kv-v' }, typeof val === 'object' ? JSON.stringify(val) : String(val))
       )
+    )
     : [h('div', { class: 'muted' }, 'No provider data stored')];
 
   const openReview = (action) =>
@@ -386,12 +385,12 @@ export function AdminKycDetail() {
           field: 'selfie_url',
           children: k.selfieUrl
             ? h('div', { class: 'media-preview' },
-                h('img', {
-                  src: k.selfieUrl,
-                  alt: 'Selfie',
-                  onclick: () => openLightbox(k.selfieUrl),
-                })
-              )
+              h('img', {
+                src: k.selfieUrl,
+                alt: 'Selfie',
+                onclick: () => openLightbox(k.selfieUrl),
+              })
+            )
             : h('div', { class: 'muted' }, 'No selfie uploaded')
         }),
 
@@ -414,32 +413,32 @@ export function AdminKycDetail() {
         k.auditTrail.length === 0
           ? h('div', { class: 'muted' }, 'No events yet.')
           : h('ul', { class: 'timeline' },
-              k.auditTrail.map((a) =>
-                h('li', {},
-                  h('div', { class: 'dot' }),
-                  h('div', {},
-                    h('div', { class: 'strong' }, a.action),
-                    h('div', { class: 'muted small' },
-                      `${a.actor_role || 'system'} · ${fmtDate(a.created_at)}`),
-                    a.notes ? h('div', { class: 'small' }, a.notes) : null
-                  )
+            k.auditTrail.map((a) =>
+              h('li', {},
+                h('div', { class: 'dot' }),
+                h('div', {},
+                  h('div', { class: 'strong' }, a.action),
+                  h('div', { class: 'muted small' },
+                    `${a.actor_role || 'system'} · ${fmtDate(a.created_at)}`),
+                  a.notes ? h('div', { class: 'small' }, a.notes) : null
                 )
               )
             )
+          )
       )
     ),
 
     canReview
       ? h('div', { class: 'review-actions' },
-          h('button', {
-            class: 'btn danger',
-            onclick: () => openReview('reject'),
-          }, 'Reject'),
-          h('button', {
-            class: 'btn success',
-            onclick: () => openReview('approve'),
-          }, 'Approve')
-        )
+        h('button', {
+          class: 'btn danger',
+          onclick: () => openReview('reject'),
+        }, 'Reject'),
+        h('button', {
+          class: 'btn success',
+          onclick: () => openReview('approve'),
+        }, 'Approve')
+      )
       : null,
 
     ReviewModal()
@@ -497,16 +496,16 @@ function ReviewModal() {
       h('h3', {}, m.action === 'approve' ? 'Approve KYC' : 'Reject KYC'),
       m.action === 'reject'
         ? h('div', { class: 'field' },
-            h('span', { class: 'label' }, 'Reason'),
-            h('select', {
-              value: m.reason,
-              onchange: (e) => setState({ admin: { ...admin, reviewModal: { ...m, reason: e.target.value } } }),
-            },
-              h('option', { value: '' }, 'Select a reason…'),
-              admin.rejectionReasons.map((r) =>
-                h('option', { value: r.value }, r.label))
-            )
+          h('span', { class: 'label' }, 'Reason'),
+          h('select', {
+            value: m.reason,
+            onchange: (e) => setState({ admin: { ...admin, reviewModal: { ...m, reason: e.target.value } } }),
+          },
+            h('option', { value: '' }, 'Select a reason…'),
+            admin.rejectionReasons.map((r) =>
+              h('option', { value: r.value }, r.label))
           )
+        )
         : h('p', { class: 'muted' }, 'This will mark the user as KYC-verified and unlock host/guest actions.'),
       h('div', { class: 'field' },
         h('span', { class: 'label' }, 'Notes (optional)'),
@@ -565,35 +564,35 @@ export function AdminAudit() {
       : a.items.length === 0
         ? EmptyState({ title: 'No audit entries yet' })
         : h('div', { class: 'table-wrap' },
-            h('table', { class: 'data-table' },
-              h('thead', {},
-                h('tr', {},
-                  h('th', {}, 'When'),
-                  h('th', {}, 'Actor'),
-                  h('th', {}, 'Action'),
-                  h('th', {}, 'Entity'),
-                  h('th', {}, 'Notes')
-                )
-              ),
-              h('tbody', {},
-                a.items.map((row) =>
-                  h('tr', { class: row.sensitive ? 'sens-row' : '' },
-                    h('td', { class: 'muted small' }, fmtDate(row.created_at)),
-                    h('td', {},
-                      h('span', { class: 'role-chip' }, row.actor_role || 'system'),
-                      h('div', { class: 'muted small mono' }, (row.actor_id || '').slice(0, 8))
-                    ),
-                    h('td', {}, h('span', { class: 'action-chip' }, row.action)),
-                    h('td', { class: 'muted small' },
-                      row.entity_type,
-                      h('div', { class: 'mono small' }, (row.entity_id || '').slice(0, 8))
-                    ),
-                    h('td', { class: 'muted small' }, row.notes || '—')
-                  )
+          h('table', { class: 'data-table' },
+            h('thead', {},
+              h('tr', {},
+                h('th', {}, 'When'),
+                h('th', {}, 'Actor'),
+                h('th', {}, 'Action'),
+                h('th', {}, 'Entity'),
+                h('th', {}, 'Notes')
+              )
+            ),
+            h('tbody', {},
+              a.items.map((row) =>
+                h('tr', { class: row.sensitive ? 'sens-row' : '' },
+                  h('td', { class: 'muted small' }, fmtDate(row.created_at)),
+                  h('td', {},
+                    h('span', { class: 'role-chip' }, row.actor_role || 'system'),
+                    h('div', { class: 'muted small mono' }, (row.actor_id || '').slice(0, 8))
+                  ),
+                  h('td', {}, h('span', { class: 'action-chip' }, row.action)),
+                  h('td', { class: 'muted small' },
+                    row.entity_type,
+                    h('div', { class: 'mono small' }, (row.entity_id || '').slice(0, 8))
+                  ),
+                  h('td', { class: 'muted small' }, row.notes || '—')
                 )
               )
             )
-          ),
+          )
+        ),
     h('div', { class: 'pager' },
       h('button', { class: 'btn ghost', disabled: a.page <= 1, onclick: () => setPage(a.page - 1) }, 'Prev'),
       h('span', { class: 'muted' }, `Page ${a.page} of ${pages} · ${a.total} total`),
@@ -695,5 +694,205 @@ export async function loadAudit() {
     });
   } catch (err) {
     setState({ admin: { ...admin, audit: { ...admin.audit, loading: false }, error: err.message } });
+  }
+}
+
+
+/* ---------- LIST ---------- */
+
+export function AdminListings() {
+  const { admin } = getState();
+  const list = admin.listings || { items: [], loading: false, page: 1, total: 0 };
+
+  return h('div', { class: 'admin-page' },
+    h('header', { class: 'page-head' },
+      h('h1', {}, 'Listing approvals'),
+      h('button', { class: 'btn ghost', onclick: loadAdminListings }, 'Refresh')
+    ),
+    list.loading
+      ? h('div', { class: 'loading-row' }, 'Loading…')
+      : list.items.length === 0
+        ? h('div', { class: 'empty' }, h('h3', {}, 'No listings pending'))
+        : h('div', { class: 'table-wrap' },
+            h('table', { class: 'data-table' },
+              h('thead', {},
+                h('tr', {},
+                  h('th', {}, 'Listing'),
+                  h('th', {}, 'Host'),
+                  h('th', {}, 'Location'),
+                  h('th', {}, 'Price / night'),
+                  h('th', {}, 'Photos'),
+                  h('th', {}, 'Submitted')
+                )
+              ),
+              h('tbody', {},
+                list.items.map((it) =>
+                  h('tr', {
+                    class: 'clickable',
+                    onclick: () => openAdminListingDetail(it.id),
+                  },
+                    h('td', {},
+                      h('div', { class: 'user-cell' },
+                        h('img', {
+                          src: it.coverUrl || '', alt: '',
+                          class: 'thumb',
+                          onerror: (e) => { e.target.style.display = 'none'; },
+                        }),
+                        h('div', {},
+                          h('div', { class: 'strong' }, it.title),
+                          h('div', { class: 'muted small' }, it.listingType)
+                        )
+                      )
+                    ),
+                    h('td', {},
+                      h('div', {}, it.hostName),
+                      h('div', { class: 'muted small' }, it.hostPhone)
+                    ),
+                    h('td', { class: 'muted small' },
+                      `${it.neighborhood || ''}${it.neighborhood ? ', ' : ''}${it.city}`),
+                    h('td', {}, fmtN(it.basePriceKobo)),
+                    h('td', {}, it.mediaCount),
+                    h('td', { class: 'muted small' }, fmtDate(it.createdAt))
+                  )
+                )
+              )
+            )
+          )
+  );
+}
+
+/* ---------- DETAIL ---------- */
+
+export function AdminListingDetail() {
+  const { admin } = getState();
+  const d = admin.listings?.detail;
+
+  if (!d) return h('div', { class: 'admin-page' }, 'Loading…');
+
+  const back = () => setState({
+    admin: {
+      ...admin,
+      listings: { ...admin.listings, view: 'list', detail: null },
+    },
+  });
+
+  const approve = async () => {
+    const score = prompt('Verification score (0–100):', '75');
+    if (score == null) return;
+    try {
+      await api.adminApproveListing(getState().accessToken, d.id, { verificationScore: Number(score) });
+      back();
+      loadAdminListings();
+    } catch (err) {
+      setState({ admin: { ...admin, error: err.message } });
+    }
+  };
+
+  const reject = async () => {
+    const reason = prompt('Rejection reason:');
+    if (!reason) return;
+    try {
+      await api.adminRejectListing(getState().accessToken, d.id, { reason });
+      back();
+      loadAdminListings();
+    } catch (err) {
+      setState({ admin: { ...admin, error: err.message } });
+    }
+  };
+
+  return h('div', { class: 'admin-page' },
+    h('header', { class: 'page-head' },
+      h('button', { class: 'btn ghost', onclick: back }, '← Back'),
+      h('div', { class: 'head-right' },
+        h('span', { class: `pill ${d.status}` }, d.status)
+      )
+    ),
+    h('div', { class: 'detail-layout' },
+      h('section', { class: 'detail-main' },
+        h('h1', {}, d.title),
+        h('div', { class: 'muted' },
+          `${d.property.neighborhood || ''}${d.property.neighborhood ? ', ' : ''}${d.property.city}, ${d.property.state}`),
+        h('div', { class: 'detail-specs' },
+          h('span', {}, d.listingType),
+          h('span', {}, `${d.bedrooms} bd · ${d.beds} bed · ${d.bathrooms} bath`),
+          h('span', {}, `Max ${d.maxGuests} guests`)
+        ),
+        h('div', { class: 'gallery-thumbs-grid' },
+          d.photos.map((p) =>
+            h('img', {
+              src: p.thumbnailUrl || p.url, alt: '',
+              onclick: () => window.open(p.url, '_blank'),
+            })
+          )
+        ),
+        h('p', { class: 'detail-desc' }, d.description || 'No description.'),
+        h('h3', {}, 'Amenities'),
+        h('div', { class: 'amenity-list' },
+          d.amenities.map((a) => h('span', { class: 'amenity-tag' }, a.name))
+        ),
+        d.houseRules ? h('section', {},
+          h('h3', {}, 'House rules'),
+          h('p', { class: 'muted' }, d.houseRules)
+        ) : null
+      ),
+      h('aside', { class: 'detail-side' },
+        h('div', { class: 'card flat' },
+          h('h2', {}, 'Host'),
+          h('div', {}, d.host.firstName, ' ', d.host.lastName),
+          h('div', { class: 'muted small' }, d.host.phone),
+          h('div', { class: 'muted small' }, `KYC: ${d.host.kycStatus}`)
+        ),
+        h('div', { class: 'card flat' },
+          h('h2', {}, 'Pricing'),
+          h('div', {}, 'Base: ', h('strong', {}, fmtN(d.basePriceKobo))),
+          h('div', {}, 'Cleaning: ', h('strong', {}, fmtN(d.cleaningFeeKobo))),
+          d.securityDepositKobo > 0
+            ? h('div', {}, 'Deposit: ', h('strong', {}, fmtN(d.securityDepositKobo)))
+            : null
+        ),
+        d.property.ownershipDocUrl
+          ? h('div', { class: 'card flat' },
+              h('h2', {}, 'Ownership document'),
+              h('a', {
+                href: d.property.ownershipDocUrl,
+                target: '_blank',
+                class: 'btn ghost',
+              }, 'View document')
+            )
+          : null,
+        h('div', { class: 'review-actions' },
+          h('button', { class: 'btn danger', onclick: reject }, 'Reject'),
+          h('button', { class: 'btn success', onclick: approve }, 'Approve')
+        )
+      )
+    )
+  );
+}
+
+export async function loadAdminListings() {
+  const { admin, accessToken } = getState();
+  const listings = admin.listings || { items: [], page: 1 };
+  setState({ admin: { ...admin, listings: { ...listings, loading: true } } });
+  try {
+    const res = await api.adminListListings(accessToken, {
+      status: 'pending_review',
+      page: listings.page || 1,
+    });
+    setState({
+      admin: { ...admin, listings: { ...listings, loading: false, items: res.data, total: res.pagination.total } },
+    });
+  } catch (err) {
+    setState({ admin: { ...admin, listings: { ...listings, loading: false }, error: err.message } });
+  }
+}
+
+export async function openAdminListingDetail(id) {
+  const { admin, accessToken } = getState();
+  setState({ admin: { ...admin, listings: { ...admin.listings, view: 'detail', detail: null } } });
+  try {
+    const data = await api.adminListListingDetail(accessToken, id);
+    setState({ admin: { ...admin, listings: { ...admin.listings, view: 'detail', detail: data } } });
+  } catch (err) {
+    setState({ admin: { ...admin, error: err.message } });
   }
 }
