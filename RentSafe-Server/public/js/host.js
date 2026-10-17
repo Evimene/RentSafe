@@ -1,6 +1,8 @@
 import { h } from './mini.js';
 import { getState, setState } from './store.js';
 import { api } from './api.js';
+import { HostCalendarModal, openHostCalendar } from './host-calendar.js';
+
 
 const fmtN = (kobo) =>
   kobo == null ? '—' : `₦${(Number(kobo) / 100).toLocaleString('en-NG')}`;
@@ -36,46 +38,54 @@ export function HostDashboard() {
     ),
     items.length === 0
       ? h('div', { class: 'empty' },
-          h('div', { class: 'empty-icon' }, '🏠'),
-          h('h3', {}, 'No listings yet'),
-          h('p', { class: 'muted' }, 'Create your first shortlet listing to start earning.'))
+        h('div', { class: 'empty-icon' }, '🏠'),
+        h('h3', {}, 'No listings yet'),
+        h('p', { class: 'muted' }, 'Create your first shortlet listing to start earning.'))
       : h('div', { class: 'listing-grid' },
-          items.map((it) => h('article', { class: 'listing-admin-card' },
-            h('div', { class: 'lac-cover' },
-              it.coverUrl
-                ? h('img', { src: it.coverUrl, alt: '' })
-                : h('div', { class: 'lac-placeholder' }, 'No cover')
+        items.map((it) => h('article', { class: 'listing-admin-card' },
+          h('div', { class: 'lac-cover' },
+            it.coverUrl
+              ? h('img', { src: it.coverUrl, alt: '' })
+              : h('div', { class: 'lac-placeholder' }, 'No cover')
+          ),
+          h('div', { class: 'lac-body' },
+            h('div', { class: 'lac-head' },
+              h('h3', {}, it.title),
+              h('span', { class: `pill ${it.status}` }, STATUS_LABEL[it.status] || it.status)
             ),
-            h('div', { class: 'lac-body' },
-              h('div', { class: 'lac-head' },
-                h('h3', {}, it.title),
-                h('span', { class: `pill ${it.status}` }, STATUS_LABEL[it.status] || it.status)
-              ),
-              h('div', { class: 'muted small' },
-                `${it.neighborhood || ''}${it.neighborhood ? ' · ' : ''}${it.city || ''}`),
-              h('div', { class: 'lac-meta' },
-                h('span', {}, `${it.bedrooms} bd · ${it.maxGuests} guests`),
-                h('span', {}, h('strong', {}, fmtN(it.basePriceKobo)), ' / night')
-              ),
-              it.rejectionReason
-                ? h('div', { class: 'alert error small' }, `Rejected: ${it.rejectionReason}`)
-                : null,
-              h('div', { class: 'lac-actions' },
-                h('button', {
-                  class: 'btn ghost tiny',
-                  onclick: () => openEdit(it.id),
-                }, it.status === 'draft' || it.status === 'rejected' ? 'Continue editing' : 'View'),
-                (it.status === 'draft' || it.status === 'rejected') && it.mediaCount >= 3
-                  ? h('button', {
-                      class: 'btn primary tiny',
-                      onclick: () => submitListing(it.id),
-                    }, 'Submit for review')
-                  : null
-              )
+            h('div', { class: 'muted small' },
+              `${it.neighborhood || ''}${it.neighborhood ? ' · ' : ''}${it.city || ''}`),
+            h('div', { class: 'lac-meta' },
+              h('span', {}, `${it.bedrooms} bd · ${it.maxGuests} guests`),
+              h('span', {}, h('strong', {}, fmtN(it.basePriceKobo)), ' / night')
+            ),
+            it.rejectionReason
+              ? h('div', { class: 'alert error small' }, `Rejected: ${it.rejectionReason}`)
+              : null,
+            h('div', { class: 'lac-actions' },
+              h('button', {
+                class: 'btn ghost tiny',
+                onclick: () => openEdit(it.id),
+              }, it.status === 'draft' || it.status === 'rejected' ? 'Continue editing' : 'View'),
+
+              // Only show if the listing is NOT a draft or rejected
+              it.status !== 'draft' && it.status !== 'rejected' ? h('button', {
+                class: 'btn ghost tiny',
+                onclick: () => openHostCalendar(it.id, it.title),
+              }, '📅 Calendar') : null,
+
+              (it.status === 'draft' || it.status === 'rejected') && it.mediaCount >= 3
+                ? h('button', {
+                  class: 'btn primary tiny',
+                  onclick: () => submitListing(it.id),
+                }, 'Submit for review')
+                : null
             )
-          ))
-        ),
-    host.wizard.open ? ListingWizard() : null
+          )
+        ))
+      ),
+    host.wizard.open ? ListingWizard() : null,
+    host.calendar?.open ? HostCalendarModal() : null
   );
 }
 
@@ -186,9 +196,9 @@ export function ListingWizard() {
       ),
       h('div', { class: 'wizard-body' },
         step === 1 ? StepProperty() :
-        step === 2 ? StepDetails() :
-        step === 3 ? StepPhotos() :
-        step === 4 ? StepPricing() : null
+          step === 2 ? StepDetails() :
+            step === 3 ? StepPhotos() :
+              step === 4 ? StepPricing() : null
       )
     )
   );
@@ -221,10 +231,12 @@ function StepProperty() {
     if (w.listingId) {
       // We're editing — just update local state and continue
       setState({
-        host: { ...host, wizard: {
-          ...w, step: 2,
-          data: { ...w.data, property },
-        }},
+        host: {
+          ...host, wizard: {
+            ...w, step: 2,
+            data: { ...w.data, property },
+          }
+        },
       });
       return;
     }
@@ -239,10 +251,12 @@ function StepProperty() {
         },
       });
       setState({
-        host: { ...host, wizard: {
-          ...w, listingId: res.listingId, step: 2,
-          data: { ...w.data, property },
-        }},
+        host: {
+          ...host, wizard: {
+            ...w, listingId: res.listingId, step: 2,
+            data: { ...w.data, property },
+          }
+        },
       });
     } catch (err) {
       setState({ host: { ...host, error: err.message } });
@@ -265,14 +279,14 @@ function StepProperty() {
       h('label', { class: 'field' },
         h('span', { class: 'label' }, 'Property type'),
         h('select', { name: 'propertyType' },
-          ['apartment','duplex','bungalow','studio','penthouse','villa','cottage','other']
+          ['apartment', 'duplex', 'bungalow', 'studio', 'penthouse', 'villa', 'cottage', 'other']
             .map((v) => h('option', { value: v, selected: p.propertyType === v ? '' : null }, v))
         )
       ),
       h('label', { class: 'field' },
         h('span', { class: 'label' }, 'Ownership'),
         h('select', { name: 'ownershipType' },
-          ['owned','leased','managed'].map((v) =>
+          ['owned', 'leased', 'managed'].map((v) =>
             h('option', { value: v, selected: p.ownershipType === v ? '' : null }, v))
         )
       )
@@ -282,8 +296,10 @@ function StepProperty() {
       Field({ label: 'Longitude (optional)', name: 'lng', value: p.lng, type: 'number' })
     ),
     h('div', { class: 'wizard-actions' },
-      h('button', { type: 'button', class: 'btn ghost',
-        onclick: () => setState({ host: { ...host, wizard: { ...w, open: false } } }) }, 'Cancel'),
+      h('button', {
+        type: 'button', class: 'btn ghost',
+        onclick: () => setState({ host: { ...host, wizard: { ...w, open: false } } })
+      }, 'Cancel'),
       h('button', { type: 'submit', class: 'btn primary' }, 'Continue →')
     )
   );
@@ -297,9 +313,9 @@ function StepDetails() {
   const l = w.data.listing || {};
 
   const AMENITIES = [
-    'wifi','ac','generator','kitchen','washer','dryer','tv','streaming',
-    'pool','gym','security','parking','balcony','workspace','hot_water',
-    'elevator','housekeeping','breakfast','ocean_view','pets_allowed',
+    'wifi', 'ac', 'generator', 'kitchen', 'washer', 'dryer', 'tv', 'streaming',
+    'pool', 'gym', 'security', 'parking', 'balcony', 'workspace', 'hot_water',
+    'elevator', 'housekeeping', 'breakfast', 'ocean_view', 'pets_allowed',
   ];
 
   const save = async (e) => {
@@ -326,10 +342,12 @@ function StepDetails() {
     try {
       await api.hostUpdateListing(getState().accessToken, w.listingId, listing);
       setState({
-        host: { ...host, wizard: {
-          ...w, step: 3,
-          data: { ...w.data, listing },
-        }},
+        host: {
+          ...host, wizard: {
+            ...w, step: 3,
+            data: { ...w.data, listing },
+          }
+        },
       });
     } catch (err) {
       setState({ host: { ...host, error: err.message } });
@@ -338,12 +356,16 @@ function StepDetails() {
 
   return h('form', { class: 'wizard-form', onsubmit: save },
     h('h3', {}, 'Tell guests about the space'),
-    Field({ label: 'Listing title', name: 'title', value: l.title,
-      placeholder: 'e.g. Modern 2-bedroom in Lekki Phase 1' }),
+    Field({
+      label: 'Listing title', name: 'title', value: l.title,
+      placeholder: 'e.g. Modern 2-bedroom in Lekki Phase 1'
+    }),
     h('label', { class: 'field' },
       h('span', { class: 'label' }, 'Description'),
-      h('textarea', { name: 'description', rows: 4,
-        placeholder: 'Describe the space, the vibe, what makes it special…' },
+      h('textarea', {
+        name: 'description', rows: 4,
+        placeholder: 'Describe the space, the vibe, what makes it special…'
+      },
         l.description || '')
     ),
     h('div', { class: 'grid-3' },
@@ -379,13 +401,17 @@ function StepDetails() {
     ),
     h('label', { class: 'field' },
       h('span', { class: 'label' }, 'House rules (optional)'),
-      h('textarea', { name: 'houseRules', rows: 3,
-        placeholder: 'No smoking. No parties. Check-out by 11am.' },
+      h('textarea', {
+        name: 'houseRules', rows: 3,
+        placeholder: 'No smoking. No parties. Check-out by 11am.'
+      },
         l.houseRules || '')
     ),
     h('div', { class: 'wizard-actions' },
-      h('button', { type: 'button', class: 'btn ghost',
-        onclick: () => setState({ host: { ...host, wizard: { ...w, step: 1 } } }) }, '← Back'),
+      h('button', {
+        type: 'button', class: 'btn ghost',
+        onclick: () => setState({ host: { ...host, wizard: { ...w, step: 1 } } })
+      }, '← Back'),
       h('button', { type: 'submit', class: 'btn primary' }, 'Continue →')
     )
   );
@@ -407,11 +433,13 @@ function StepPhotos() {
     try {
       const res = await api.hostUploadPhotos(getState().accessToken, w.listingId, fd);
       setState({
-        host: { ...host, wizard: {
-          ...w,
-          uploading: false,
-          photos: [...photos, ...res.photos],
-        }},
+        host: {
+          ...host, wizard: {
+            ...w,
+            uploading: false,
+            photos: [...photos, ...res.photos],
+          }
+        },
       });
     } catch (err) {
       setState({ host: { ...host, wizard: { ...w, uploading: false }, error: err.message } });
@@ -422,9 +450,11 @@ function StepPhotos() {
     try {
       await api.hostDeletePhoto(getState().accessToken, w.listingId, mediaId);
       setState({
-        host: { ...host, wizard: {
-          ...w, photos: photos.filter((p) => p.id !== mediaId),
-        }},
+        host: {
+          ...host, wizard: {
+            ...w, photos: photos.filter((p) => p.id !== mediaId),
+          }
+        },
       });
     } catch (err) {
       setState({ host: { ...host, error: err.message } });
@@ -435,9 +465,11 @@ function StepPhotos() {
     try {
       await api.hostSetCover(getState().accessToken, w.listingId, mediaId);
       setState({
-        host: { ...host, wizard: {
-          ...w, photos: photos.map((p) => ({ ...p, isCover: p.id === mediaId })),
-        }},
+        host: {
+          ...host, wizard: {
+            ...w, photos: photos.map((p) => ({ ...p, isCover: p.id === mediaId })),
+          }
+        },
       });
     } catch (err) {
       setState({ host: { ...host, error: err.message } });
@@ -460,29 +492,31 @@ function StepPhotos() {
     ),
     photos.length > 0
       ? h('div', { class: 'photo-grid' },
-          photos.map((p) =>
-            h('div', { class: `photo-tile ${p.isCover ? 'is-cover' : ''}` },
-              h('img', { src: p.thumbnailUrl || p.url, alt: '' }),
-              p.isCover ? h('span', { class: 'cover-badge' }, 'Cover') : null,
-              h('div', { class: 'photo-tile-actions' },
-                !p.isCover
-                  ? h('button', {
-                      class: 'btn tiny ghost', type: 'button',
-                      onclick: () => setCover(p.id),
-                    }, 'Set cover')
-                  : null,
-                h('button', {
-                  class: 'btn tiny danger', type: 'button',
-                  onclick: () => del(p.id),
-                }, 'Delete')
-              )
+        photos.map((p) =>
+          h('div', { class: `photo-tile ${p.isCover ? 'is-cover' : ''}` },
+            h('img', { src: p.thumbnailUrl || p.url, alt: '' }),
+            p.isCover ? h('span', { class: 'cover-badge' }, 'Cover') : null,
+            h('div', { class: 'photo-tile-actions' },
+              !p.isCover
+                ? h('button', {
+                  class: 'btn tiny ghost', type: 'button',
+                  onclick: () => setCover(p.id),
+                }, 'Set cover')
+                : null,
+              h('button', {
+                class: 'btn tiny danger', type: 'button',
+                onclick: () => del(p.id),
+              }, 'Delete')
             )
           )
         )
+      )
       : h('p', { class: 'muted small' }, 'No photos uploaded yet.'),
     h('div', { class: 'wizard-actions' },
-      h('button', { type: 'button', class: 'btn ghost',
-        onclick: () => setState({ host: { ...host, wizard: { ...w, step: 2 } } }) }, '← Back'),
+      h('button', {
+        type: 'button', class: 'btn ghost',
+        onclick: () => setState({ host: { ...host, wizard: { ...w, step: 2 } } })
+      }, '← Back'),
       h('button', {
         type: 'button', class: 'btn primary',
         disabled: photos.length < 3,
@@ -531,12 +565,18 @@ function StepPricing() {
   return h('form', { class: 'wizard-form', onsubmit: save },
     h('h3', {}, 'Set your price'),
     h('div', { class: 'grid-3' },
-      Field({ label: 'Base price (₦ / night)', name: 'basePrice', type: 'number',
-        value: l.basePriceKobo ? l.basePriceKobo / 100 : '' }),
-      Field({ label: 'Cleaning fee (₦)', name: 'cleaningFee', type: 'number',
-        value: l.cleaningFeeKobo ? l.cleaningFeeKobo / 100 : 0 }),
-      Field({ label: 'Security deposit (₦)', name: 'securityDeposit', type: 'number',
-        value: l.securityDepositKobo ? l.securityDepositKobo / 100 : 0 })
+      Field({
+        label: 'Base price (₦ / night)', name: 'basePrice', type: 'number',
+        value: l.basePriceKobo ? l.basePriceKobo / 100 : ''
+      }),
+      Field({
+        label: 'Cleaning fee (₦)', name: 'cleaningFee', type: 'number',
+        value: l.cleaningFeeKobo ? l.cleaningFeeKobo / 100 : 0
+      }),
+      Field({
+        label: 'Security deposit (₦)', name: 'securityDeposit', type: 'number',
+        value: l.securityDepositKobo ? l.securityDepositKobo / 100 : 0
+      })
     ),
     h('div', { class: 'grid-2' },
       Field({ label: 'Check-in time', name: 'checkInTime', type: 'time', value: l.checkInTime || '15:00' }),
@@ -545,20 +585,24 @@ function StepPricing() {
     h('label', { class: 'field' },
       h('span', { class: 'label' }, 'Cancellation policy'),
       h('select', { name: 'cancellationPolicy' },
-        [['flexible','Flexible — full refund 24h before'],
-         ['moderate','Moderate — full refund 5 days before'],
-         ['strict','Strict — 50% refund 7 days before']]
+        [['flexible', 'Flexible — full refund 24h before'],
+        ['moderate', 'Moderate — full refund 5 days before'],
+        ['strict', 'Strict — 50% refund 7 days before']]
           .map(([v, t]) => h('option', { value: v, selected: l.cancellationPolicy === v ? '' : null }, t))
       )
     ),
     h('label', { class: 'check-row' },
-      h('input', { type: 'checkbox', name: 'instantBook',
-        checked: l.instantBook ? '' : null }),
+      h('input', {
+        type: 'checkbox', name: 'instantBook',
+        checked: l.instantBook ? '' : null
+      }),
       h('span', {}, 'Enable instant book (guests book without approval)')
     ),
     h('div', { class: 'wizard-actions' },
-      h('button', { type: 'button', class: 'btn ghost',
-        onclick: () => setState({ host: { ...host, wizard: { ...w, step: 3 } } }) }, '← Back'),
+      h('button', {
+        type: 'button', class: 'btn ghost',
+        onclick: () => setState({ host: { ...host, wizard: { ...w, step: 3 } } })
+      }, '← Back'),
       h('button', { type: 'submit', class: 'btn primary' }, 'Submit for review ✓')
     )
   );
