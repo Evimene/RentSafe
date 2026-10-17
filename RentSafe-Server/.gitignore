@@ -4,3 +4,4 @@ node_modules/
 .env.example
 uploads/
 *.log
+README-LOCAL-SETUP.md

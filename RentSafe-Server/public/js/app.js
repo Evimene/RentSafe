@@ -1,6 +1,10 @@
 import { h, mount } from './mini.js';
 import { store, setState, getState } from './store.js';
 import { api } from './api.js';
+import {
+  AdminShell, AdminKycList, AdminKycDetail, AdminAudit,
+  loadStats, loadKycList, openKycDetail, loadAudit,
+} from './admin.js';
 
 //---------------> helpers
 const navigate = (route) => setState({ route, error: null, flash: null });
@@ -34,18 +38,25 @@ function Header() {
     h('nav', {},
       accessToken
         ? h('div', { class: 'user' },
-            h('span', {}, user?.firstName || 'User'),
-            h('button', {
+          isAdmin(user)
+            ? h('button', {
               class: 'link',
-              onclick: async () => {
-                try { await api.logout({ refreshToken: getState().refreshToken }); } catch {}
-                localStorage.removeItem('refreshToken');
-                setState({
-                  accessToken: null, refreshToken: null, user: null,
-                  route: 'login', kyc: { overall: null, records: [] },
-                });
+              onclick: () => {
+                setState({ route: 'admin', admin: { ...getState().admin, view: 'kyc_list' } });
+                loadStats();
+                loadKycList();
               },
-            }, 'Log out'))
+            }, 'Admin')
+            : null,
+          h('span', {}, user?.firstName || 'User'),
+          h('button', {
+            class: 'link',
+            onclick: async () => {
+              try { await api.logout({ refreshToken: getState().refreshToken }); } catch { }
+              localStorage.removeItem('refreshToken');
+              setState({ accessToken: null, refreshToken: null, user: null, route: 'login' });
+            },
+          }, 'Log out'))
         : h('span', { class: 'muted' }, 'Nigeria · escrow-protected stays')
     )
   );
@@ -183,6 +194,10 @@ function LoginScreen() {
             route: 'dashboard',
             flash: null,
           });
+          if (isAdmin(res.user)) {
+            loadStats();
+            loadKycList();
+          }
           loadKyc();
         } catch (err) {
           setState({ loading: false, error: err.message });
@@ -271,14 +286,14 @@ function KycScreen() {
       kyc.records.length === 0
         ? h('p', { class: 'muted' }, 'No submissions yet.')
         : h('ul', { class: 'records' },
-            kyc.records.map((r) =>
-              h('li', {},
-                h('strong', {}, String(r.type).toUpperCase()),
-                ' — ', h('span', { class: `pill ${r.status}` }, r.status),
-                r.reason ? h('span', { class: 'muted' }, ` (${r.reason})`) : null
-              )
+          kyc.records.map((r) =>
+            h('li', {},
+              h('strong', {}, String(r.type).toUpperCase()),
+              ' — ', h('span', { class: `pill ${r.status}` }, r.status),
+              r.reason ? h('span', { class: 'muted' }, ` (${r.reason})`) : null
             )
           )
+        )
     ),
     h('button', {
       class: 'link',
@@ -298,20 +313,39 @@ async function loadKyc() {
   }
 }
 
+function isAdmin(user) {
+  const roles = user?.roles || [];
+  return roles.includes('admin') || roles.includes('support');
+}
+
+
 // -------------> Root
 function App() {
-  const { route, accessToken } = getState();
+  const { route, accessToken, user, admin } = getState();
   const publicRoutes = new Set(['register', 'verify', 'login']);
 
+  // Admin routes
+  if (accessToken && isAdmin(user) && route.startsWith('admin')) {
+    let screen;
+    switch (admin.view) {
+      case 'kyc_detail': screen = AdminKycDetail(); break;
+      case 'audit': screen = AdminAudit(); break;
+      case 'kyc_list':
+      default: screen = AdminKycList();
+    }
+    return AdminShell({ children: screen });
+  }
+
+  // Regular user routes
   let screen;
   if (!accessToken && !publicRoutes.has(route)) screen = LoginScreen();
   else switch (route) {
-    case 'register':  screen = RegisterScreen(); break;
-    case 'verify':    screen = VerifyScreen();   break;
-    case 'login':     screen = LoginScreen();    break;
-    case 'kyc':       screen = KycScreen();      break;
-    case 'dashboard': screen = DashboardScreen();break;
-    default:          screen = LoginScreen();
+    case 'register': screen = RegisterScreen(); break;
+    case 'verify': screen = VerifyScreen(); break;
+    case 'login': screen = LoginScreen(); break;
+    case 'kyc': screen = KycScreen(); break;
+    case 'dashboard': screen = DashboardScreen(); break;
+    default: screen = LoginScreen();
   }
 
   return h('div', { class: 'app' }, Header(), screen);
@@ -342,6 +376,10 @@ store.subscribe(() => rerender());
     });
     const me = await api.me(data.accessToken);
     setState({ user: me.user });
+    if (isAdmin(me.user)) {
+      loadStats();
+      loadKycList();
+    }
     loadKyc();
   } catch {
     localStorage.removeItem('refreshToken');

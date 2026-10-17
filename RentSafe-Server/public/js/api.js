@@ -37,4 +37,18 @@ export const api = {
   kycStatus: (t) => request('/kyc/status', { token: t }),
   submitKyc: (t, formData) =>
     request('/kyc/submit', { method: 'POST', body: formData, token: t, isForm: true }),
+
+
+  // ---- Admin ----
+  adminStats: (t) => request('/admin/stats', { token: t }),
+  adminListKyc: (t, params) =>
+    request(`/admin/kyc?${new URLSearchParams(params).toString()}`, { token: t }),
+  adminKycDetail: (t, id) => request(`/admin/kyc/${id}`, { token: t }),
+  adminReveal: (t, id, field) =>
+    request(`/admin/kyc/${id}/reveal`, { method: 'POST', body: { field }, token: t }),
+  adminReviewKyc: (t, id, body) =>
+    request(`/admin/kyc/${id}/review`, { method: 'POST', body, token: t }),
+  adminAudit: (t, params) =>
+    request(`/admin/audit?${new URLSearchParams(params).toString()}`, { token: t }),
+  adminRejectionReasons: (t) => request('/admin/rejection-reasons', { token: t }),
 };

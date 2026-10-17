@@ -117,3 +117,40 @@ NDPA 2023	Register with NDPC as a data controller. Publish privacy policy. Suppo
 SCUML	Register if your annual transaction volume crosses the threshold
 
 **Run escrow testing** scripts/test-escrow-flow.js <guestId> <hostId> <bookingId>
+
+
+
+
+
+
+
+
+
+
+
+## Shortlet Listings — Full Implementation
+Shortlet vs long-term rental. A shortlet is booked by the night (like Airbnb). The guest pays before arrival, the host gets paid after check-in, and the platform holds the funds in between. Long-term rentals (annual leases) come in Phase 2 — they have a completely different flow (escrow for months, tenancy agreements, etc.). This module builds shortlet only, but the schema is designed so long-term rentals can reuse properties and add a leases table later.
+
+The flow you're building:
+
+text
+HOST                              ADMIN                         GUEST
+ │                                 │                             │
+ │ 1. Create property + listing    │                             │
+ │    (address, photos, pricing)   │                             │
+ │                                 │                             │
+ │ 2. Submit for review            │                             │
+ ├────────────────────────────────►│                             │
+ │                                 │                             │
+ │                                 │ 3. Review photos, data      │
+ │                                 │    Approve / reject         │
+ │                                 │                             │
+ │ 4. Listing goes live            │                             │
+ │                                 │                             │
+ │                                 │             5. Search + view◄┤
+ │                                 │                             │
+ │                                 │             6. Book (charge)►│
+ │                                 │                             │
+ │ 7. Check-in (code)              │                             │
+ │                                 │                             │
+ │ 8. Payout after 24h             │                             │
