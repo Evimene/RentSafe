@@ -47,26 +47,26 @@ export const store = createStore({
     },
   },
 
-
   browse: {
-    view: 'list',        // 'list' | 'detail'
-    filters: {
-      city: 'Lagos',
-      checkIn: '', checkOut: '', guests: '1',
+    view: 'list',
+    filters: { city: 'Lagos', checkIn: '', checkOut: '', guests: '1' },
+    results: [], current: null, currentId: null,
+    page: 1, pageSize: 12, loading: false, error: null,
+    calendar: {
+      year: new Date().getUTCFullYear(), month: new Date().getUTCMonth(),
+      data: null, selectedRange: null, pricing: null,
+      pricingLoading: false, pricingError: null, loading: false, error: null,
     },
-    results: [],
-    current: null,
-    currentId: null,
-    page: 1,
-    pageSize: 12,
-    loading: false,
-    error: null,
   },
   host: {
     listings: [],
     wizard: { open: false, step: 1, listingId: null, data: {}, photos: [], uploading: false },
-    error: null,
-    flash: null,
+    calendar: {
+      open: false, loading: false, listingId: null, listingTitle: '',
+      year: new Date().getUTCFullYear(), month: new Date().getUTCMonth(),
+      data: null, selectedRange: null, priceOpen: false, error: null,
+    },
+    error: null, flash: null,
   },
 });
 
