@@ -80,6 +80,21 @@ searchListings: (t, params) =>
   request(`/listings/search?${new URLSearchParams(params).toString()}`, { token: t }),
 getListing: (t, id) => request(`/listings/${id}`, { token: t }),
 
+
+// Host availability
+hostGetAvailability: (t, id, from, to) =>
+  request(`/host/listings/${id}/availability?from=${from}&to=${to}`, { token: t }),
+hostBulkAvailability: (t, id, body) =>
+  request(`/host/listings/${id}/availability/bulk`, { method: 'POST', body, token: t }),
+hostClearOverrides: (t, id, body) =>
+  request(`/host/listings/${id}/availability/clear-overrides`, { method: 'POST', body, token: t }),
+
+// Public availability + pricing
+publicAvailability: (t, id, from, to) =>
+  request(`/listings/${id}/availability?from=${from}&to=${to}`, { token: t }),
+priceListing: (t, id, checkIn, checkOut) =>
+  request(`/listings/${id}/price?checkIn=${checkIn}&checkOut=${checkOut}`, { token: t }),
+
 };
 
 
