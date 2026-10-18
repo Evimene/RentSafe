@@ -95,6 +95,22 @@ publicAvailability: (t, id, from, to) =>
 priceListing: (t, id, checkIn, checkOut) =>
   request(`/listings/${id}/price?checkIn=${checkIn}&checkOut=${checkOut}`, { token: t }),
 
+
+// Map API
+mapMarkers: (t, params) =>
+  request(`/map/markers?${new URLSearchParams(params).toString()}`, { token: t }),
+geocode: (t, q) =>
+  request(`/map/geocode?q=${encodeURIComponent(q)}`, { token: t }),
+reverseGeocode: (t, lat, lng) =>
+  request(`/map/reverse?lat=${lat}&lng=${lng}`, { token: t }),
+nearbyListings: (t, id, radius = 2000) =>
+  request(`/map/nearby/${id}?radius=${radius}`, { token: t }),
+saveSearch: (t, body) =>
+  request('/saved-searches', { method: 'POST', body, token: t }),
+listSavedSearches: (t) => request('/saved-searches', { token: t }),
+deleteSavedSearch: (t, id) =>
+  request(`/saved-searches/${id}`, { method: 'DELETE', token: t }),
+
 };
 
 
