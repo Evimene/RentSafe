@@ -142,6 +142,23 @@ export async function openListing(id) {
   try {
     const data = await api.getListing(accessToken, id);
     setState({ browse: { ...browse, view: 'detail', loading: false, current: data, currentId: id } });
+
+    api.nearbyListings(accessToken, id).then((res) => {
+      const cur = getState().browse.current;
+      if (cur?.id === id) {
+        setState({ browse: { ...getState().browse, current: { ...cur, nearby: res.results } } });
+        if (res.results.length) {
+          setTimeout(() => {
+            const container = document.querySelector('[data-nearby-map]');
+            if (container) {
+              import('./map/map-view.js').then((m) =>
+                m.mountMiniMap(container, res.results, { lat: cur.location.lat, lng: cur.location.lng })
+              );
+            }
+          }, 100);
+        }
+      }
+    });
   } catch (err) {
     setState({ browse: { ...browse, view: 'detail', loading: false, error: err.message } });
   }
