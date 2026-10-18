@@ -116,3 +116,43 @@ export function invalidateSize(container) {
   if (!s) return;
   setTimeout(() => s.map.invalidateSize(), 50);
 }
+
+export async function mountMiniMap(container, listings, center) {
+  const L = await loadLeaflet();
+  let map = registry.get(container);
+  if (!map) {
+    map = L.map(container.querySelector('[data-map-canvas]'), {
+      center: [center.lat, center.lng],
+      zoom: 14,
+      zoomControl: false,
+      attributionControl: false,
+      scrollWheelZoom: false,
+    });
+    L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      { maxZoom: 19, subdomains: 'abcd' }
+    ).addTo(map);
+    registry.set(container, { map, markers: null, lastProps: null });
+  }
+
+  const state = registry.get(container);
+  // Clear old markers
+  state.map.eachLayer((layer) => {
+    if (layer instanceof L.Marker) state.map.removeLayer(layer);
+  });
+
+  for (const l of listings) {
+    const marker = L.marker([l.lat, l.lng], {
+      icon: L.divIcon({
+        className: 'price-marker pm-small',
+        html: `<span class="pm-label">₦${Math.round(Number(l.basePriceKobo) / 100 / 1000)}k</span>`,
+        iconSize: null,
+        iconAnchor: [20, 32],
+      }),
+    });
+    marker.on('click', () => window.location.href = `/listing/${l.id}`);
+    marker.addTo(state.map);
+  }
+
+  setTimeout(() => state.map.invalidateSize(), 50);
+}
