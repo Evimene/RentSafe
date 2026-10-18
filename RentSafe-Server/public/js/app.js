@@ -334,8 +334,14 @@ function App() {
       case 'kyc_detail': screen = AdminKycDetail(); break;
       case 'audit': screen = AdminAudit(); break;
       case 'host': screen = HostDashboard(); break;
-      case 'browse': screen = getState().browse.view === 'detail'
-        ? ListingDetail() : BrowseScreen();
+      case 'browse':
+        if (getState().browse.view === 'map') {
+          screen = BrowseMapView();
+        } else if (getState().browse.view === 'detail') {
+          screen = ListingDetail();
+        } else {
+          screen = BrowseScreen();
+        }
         break;
       case 'listing_list':
         screen = AdminListings();

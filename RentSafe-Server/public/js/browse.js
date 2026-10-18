@@ -36,7 +36,20 @@ export function BrowseScreen() {
   return h('main', { class: 'screen-wide' },
     h('header', { class: 'page-head' },
       h('h1', {}, 'Find a place to stay'),
-      h('button', { class: 'btn ghost', onclick: () => doSearch() }, '↻ Refresh')
+      h('button', { class: 'btn ghost', onclick: () => doSearch() }, '↻ Refresh'),
+      h('button', {
+        class: 'btn ghost',
+        onclick: () => {
+          setState({ browse: { ...getState().browse, view: 'map' } });
+          writeMapStateToURL({
+            view: 'map',
+            center: getState().browse.map.center,
+            zoom: getState().browse.map.zoom,
+            filters: getState().browse.filters,
+          });
+          setTimeout(() => { mountBrowseMap(); loadMarkers(true); }, 50);
+        },
+      }, '🗺 Map view')
     ),
     h('form', { class: 'search-bar', onsubmit: doSearch },
       h('input', { name: 'city', placeholder: 'City', value: f.city || '' }),
