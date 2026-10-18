@@ -375,6 +375,7 @@ function App() {
 // --------------> Boot
 const root = document.getElementById('root');
 const rerender = mount(App, root);
+const originalRender = renderFn; 
 store.subscribe(() => rerender());
 
 // Try silent refresh on boot
