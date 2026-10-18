@@ -48,15 +48,23 @@ export const store = createStore({
   },
 
   browse: {
-    view: 'list',
-    filters: { city: 'Lagos', checkIn: '', checkOut: '', guests: '1' },
-    results: [], current: null, currentId: null,
-    page: 1, pageSize: 12, loading: false, error: null,
-    calendar: {
-      year: new Date().getUTCFullYear(), month: new Date().getUTCMonth(),
-      data: null, selectedRange: null, pricing: null,
-      pricingLoading: false, pricingError: null, loading: false, error: null,
+    ...existing,
+    view: 'list',       // 'list' | 'map'
+    map: {
+      center: { lat: 6.5244, lng: 3.3792 },
+      zoom: 12,
+      markers: [],
+      loading: false,
+      error: null,
+      searchedBounds: null,
+      pendingSearch: false,
+      total: 0,
+      truncated: false,
     },
+    geocoder: { open: false, results: [], loading: false, error: null },
+    activeId: null,
+    hoverId: null,
+    toast: null,
   },
   host: {
     listings: [],
