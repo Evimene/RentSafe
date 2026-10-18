@@ -206,7 +206,29 @@ export function ListingDetail() {
               r.comment ? h('p', { class: 'muted' }, r.comment) : null
             )
           )
-        ) : null
+        ) : null,
+
+        h('section', { class: 'nearby-section' },
+          h('h3', {}, 'Other stays nearby'),
+          h('div', { class: 'nearby-map', 'data-nearby-map': '' },
+            h('div', { class: 'map-canvas', 'data-map-canvas': '' })
+          ),
+          h('div', { class: 'nearby-list' },
+            (d.nearby || []).map((n) =>
+              h('div', {
+                class: 'nearby-item',
+                onclick: () => openListing(n.id),
+              },
+                n.coverUrl ? h('img', { src: n.coverUrl, alt: '' }) : null,
+                h('div', {},
+                  h('div', { class: 'strong' }, n.title),
+                  h('div', { class: 'muted small' }, `${(n.distanceMeters / 1000).toFixed(1)} km away`),
+                  h('div', { class: 'strong' }, `₦${(n.basePriceKobo / 100).toLocaleString('en-NG')}`)
+                )
+              )
+            )
+          )
+        )
       ),
       h('aside', { class: 'detail-side' }, GuestBookingPanel())
     )
