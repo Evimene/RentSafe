@@ -1,6 +1,7 @@
 import { h } from './mini.js';
 import { getState, setState } from './store.js';
 import { api } from './api.js';
+import { GuestBookingPanel, loadGuestMonth } from './guest-booking.js';
 
 const fmtN = (kobo) =>
   kobo == null ? '—' : `₦${(Number(kobo) / 100).toLocaleString('en-NG')}`;
@@ -49,50 +50,50 @@ export function BrowseScreen() {
       ? h('div', { class: 'loading-row' }, 'Loading…')
       : r.length === 0
         ? h('div', { class: 'empty' },
-            h('div', { class: 'empty-icon' }, '🔍'),
-            h('h3', {}, 'No listings match'),
-            h('p', { class: 'muted' }, 'Try a different city or dates.'))
+          h('div', { class: 'empty-icon' }, '🔍'),
+          h('h3', {}, 'No listings match'),
+          h('p', { class: 'muted' }, 'Try a different city or dates.'))
         : h('div', { class: 'search-grid' },
-            r.map((item) => h('article', {
-              class: 'listing-card',
-              onclick: () => openListing(item.id),
-            },
-              h('div', { class: 'card-cover' },
-                item.coverUrl
-                  ? h('img', { src: item.coverUrl, alt: '' })
-                  : h('div', { class: 'card-placeholder' }, 'No photo'),
-                item.instantBook ? h('span', { class: 'instant-badge' }, '⚡ Instant') : null
+          r.map((item) => h('article', {
+            class: 'listing-card',
+            onclick: () => openListing(item.id),
+          },
+            h('div', { class: 'card-cover' },
+              item.coverUrl
+                ? h('img', { src: item.coverUrl, alt: '' })
+                : h('div', { class: 'card-placeholder' }, 'No photo'),
+              item.instantBook ? h('span', { class: 'instant-badge' }, '⚡ Instant') : null
+            ),
+            h('div', { class: 'card-body' },
+              h('div', { class: 'card-head' },
+                h('span', { class: 'muted small' }, `${item.neighborhood || ''}${item.neighborhood ? ', ' : ''}${item.city}`),
+                h('span', { class: 'rating' },
+                  item.averageRating ? `★ ${item.averageRating.toFixed(1)}` : 'New')
               ),
-              h('div', { class: 'card-body' },
-                h('div', { class: 'card-head' },
-                  h('span', { class: 'muted small' }, `${item.neighborhood || ''}${item.neighborhood ? ', ' : ''}${item.city}`),
-                  h('span', { class: 'rating' },
-                    item.averageRating ? `★ ${item.averageRating.toFixed(1)}` : 'New')
-                ),
-                h('h3', {}, item.title),
-                h('div', { class: 'muted small' },
-                  `${item.bedrooms} bd · ${item.beds} bed · ${item.bathrooms} bath · ${item.maxGuests} guests`),
-                h('div', { class: 'card-foot' },
-                  h('span', { class: 'price' }, fmtN(item.basePriceKobo), h('small', {}, ' / night')),
-                  item.verificationScore >= 70
-                    ? h('span', { class: 'verified-badge' }, '✓ Verified')
-                    : null
-                )
+              h('h3', {}, item.title),
+              h('div', { class: 'muted small' },
+                `${item.bedrooms} bd · ${item.beds} bed · ${item.bathrooms} bath · ${item.maxGuests} guests`),
+              h('div', { class: 'card-foot' },
+                h('span', { class: 'price' }, fmtN(item.basePriceKobo), h('small', {}, ' / night')),
+                item.verificationScore >= 70
+                  ? h('span', { class: 'verified-badge' }, '✓ Verified')
+                  : null
               )
-            ))
-          ),
+            )
+          ))
+        ),
     browse.results.length > 0
       ? h('div', { class: 'pager' },
-          h('button', {
-            class: 'btn ghost', disabled: browse.page <= 1,
-            onclick: () => { setState({ browse: { ...browse, page: browse.page - 1 } }); runSearch(); },
-          }, 'Prev'),
-          h('span', { class: 'muted' }, `Page ${browse.page}`),
-          h('button', {
-            class: 'btn ghost', disabled: browse.results.length < browse.pageSize,
-            onclick: () => { setState({ browse: { ...browse, page: browse.page + 1 } }); runSearch(); },
-          }, 'Next')
-        )
+        h('button', {
+          class: 'btn ghost', disabled: browse.page <= 1,
+          onclick: () => { setState({ browse: { ...browse, page: browse.page - 1 } }); runSearch(); },
+        }, 'Prev'),
+        h('span', { class: 'muted' }, `Page ${browse.page}`),
+        h('button', {
+          class: 'btn ghost', disabled: browse.results.length < browse.pageSize,
+          onclick: () => { setState({ browse: { ...browse, page: browse.page + 1 } }); runSearch(); },
+        }, 'Next')
+      )
       : null
   );
 }
@@ -126,7 +127,18 @@ async function runSearch() {
 
 export async function openListing(id) {
   const { browse, accessToken } = getState();
-  setState({ browse: { ...browse, view: 'detail', loading: true, current: null, currentId: id } });
+  const now = new Date();
+  setState({
+    browse: {
+      ...browse, view: 'detail', loading: false, current: data, currentId: id,
+      calendar: {
+        year: now.getUTCFullYear(), month: now.getUTCMonth(),
+        data: null, selectedRange: null, pricing: null,
+        loading: true, error: null, pricingLoading: false, pricingError: null,
+      },
+    },
+  });
+  loadGuestMonth(id, now.getUTCFullYear(), now.getUTCMonth());
   try {
     const data = await api.getListing(accessToken, id);
     setState({ browse: { ...browse, view: 'detail', loading: false, current: data, currentId: id } });
@@ -157,10 +169,10 @@ export function ListingDetail() {
           ),
           d.photos.length > 1
             ? h('div', { class: 'gallery-thumbs' },
-                d.photos.slice(1, 6).map((p) =>
-                  h('img', { src: p.thumbnailUrl || p.url, alt: '' })
-                )
+              d.photos.slice(1, 6).map((p) =>
+                h('img', { src: p.thumbnailUrl || p.url, alt: '' })
               )
+            )
             : null
         ),
         h('h1', {}, d.title),
@@ -196,39 +208,7 @@ export function ListingDetail() {
           )
         ) : null
       ),
-      h('aside', { class: 'detail-side' },
-        h('div', { class: 'book-card' },
-          h('div', { class: 'price-block' },
-            h('span', { class: 'big-price' }, fmtN(d.basePriceKobo)),
-            h('span', { class: 'muted' }, ' / night')
-          ),
-          h('div', { class: 'price-breakdown' },
-            h('div', {}, h('span', {}, 'Cleaning fee'), h('strong', {}, fmtN(d.cleaningFeeKobo))),
-            d.securityDepositKobo > 0
-              ? h('div', {}, h('span', {}, 'Security deposit'), h('strong', {}, fmtN(d.securityDepositKobo)))
-              : null,
-            h('div', {}, h('span', {}, 'Platform fee (15.5%)'),
-              h('strong', {}, fmtN(Math.round(d.basePriceKobo * 0.155))))
-          ),
-          h('button', {
-            class: 'btn primary block',
-            onclick: () => bookListing(d.id),
-          }, 'Book now'),
-          h('p', { class: 'muted small center' },
-            'You will not be charged until you confirm.')
-        ),
-        h('div', { class: 'host-card' },
-          h('h4', {}, 'Hosted by'),
-          h('div', { class: 'host-line' },
-            h('div', { class: 'avatar' }, (d.host.firstName || '?')[0]),
-            h('div', {},
-              h('div', { class: 'strong' }, `${d.host.firstName} ${d.host.lastName || ''}`),
-              h('div', { class: 'muted small' },
-                d.host.isSuperhost ? '⭐ Superhost' : `${d.host.bookings} bookings`)
-            )
-          )
-        )
-      )
+      h('aside', { class: 'detail-side' }, GuestBookingPanel())
     )
   );
 }
