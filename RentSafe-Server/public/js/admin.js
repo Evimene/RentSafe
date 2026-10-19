@@ -897,3 +897,228 @@ export async function openAdminListingDetail(id) {
     setState({ admin: { ...admin, error: err.message } });
   }
 }
+
+
+/* ---------- ADMIN INSPECTION LIST ---------- */
+
+export function AdminInspections() {
+  const { admin } = getState();
+  const list = admin.inspections || { items: [], loading: false };
+
+  return h('div', { class: 'admin-page' },
+    h('header', { class: 'page-head' },
+      h('h1', {}, 'Inspections'),
+      h('button', { class: 'btn ghost', onclick: loadAdminInspections }, 'Refresh')
+    ),
+    list.loading
+      ? h('div', { class: 'loading-row' }, 'Loading…')
+      : list.items.length === 0
+        ? h('div', { class: 'empty' }, h('h3', {}, 'No inspections to review'))
+        : h('div', { class: 'table-wrap' },
+            h('table', { class: 'data-table' },
+              h('thead', {},
+                h('tr', {},
+                  h('th', {}, 'Listing'),
+                  h('th', {}, 'Inspector'),
+                  h('th', {}, 'Score'),
+                  h('th', {}, 'Flags'),
+                  h('th', {}, 'Submitted')
+                )
+              ),
+              h('tbody', {},
+                list.items.map((it) =>
+                  h('tr', {
+                    class: 'clickable',
+                    onclick: () => openAdminInspection(it.id),
+                  },
+                    h('td', {},
+                      h('div', { class: 'strong' }, it.listing.title),
+                      h('div', { class: 'muted small' },
+                        `${it.listing.neighborhood || ''}, ${it.listing.city || ''}`)),
+                    h('td', { class: 'muted small' },
+                      it.inspector
+                        ? `${it.inspector.firstName} ${it.inspector.lastName}`
+                        : '—'),
+                    h('td', {},
+                      it.score != null
+                        ? h('strong', { class: it.score >= 70 ? 'text-ok' : 'text-bad' }, String(it.score))
+                        : '—'),
+                    h('td', {},
+                      it.flags?.length
+                        ? h('span', { class: 'chip warn' }, it.flags.length)
+                        : h('span', { class: 'muted' }, '—')),
+                    h('td', { class: 'muted small' }, fmtDate(it.submittedAt || it.createdAt))
+                  )
+                )
+              )
+            )
+          )
+  );
+}
+
+/* ---------- ADMIN INSPECTION DETAIL ---------- */
+
+export function AdminInspectionDetail() {
+  const { admin } = getState();
+  const d = admin.inspections?.detail;
+  if (!d) return h('div', { class: 'admin-page' }, 'Loading…');
+
+  const back = () => setState({
+    admin: { ...admin, inspections: { ...admin.inspections, view: 'list', detail: null } },
+  });
+
+  const approve = async () => {
+    const overrideStr = prompt('Override score? (leave blank to use computed)', '');
+    const overrideScore = overrideStr ? Number(overrideStr) : null;
+    const notes = prompt('Review notes (optional):') || null;
+    try {
+      await api.adminApproveInspection(getState().accessToken, d.id, { overrideScore, notes });
+      back();
+      loadAdminInspections();
+    } catch (err) {
+      setState({ admin: { ...admin, error: err.message } });
+    }
+  };
+
+  const reject = async () => {
+    const reason = prompt('Rejection reason:');
+    if (!reason) return;
+    try {
+      await api.adminRejectInspection(getState().accessToken, d.id, { reason });
+      back();
+      loadAdminInspections();
+    } catch (err) {
+      setState({ admin: { ...admin, error: err.message } });
+    }
+  };
+
+  return h('div', { class: 'admin-page' },
+    h('header', { class: 'page-head' },
+      h('button', { class: 'btn ghost', onclick: back }, '← Back'),
+      h('div', { class: 'head-right' },
+        h('span', { class: `pill ${d.status}` }, d.status))
+    ),
+    h('div', { class: 'detail-layout' },
+      h('section', { class: 'detail-main' },
+        h('h1', {}, d.listing.title),
+        h('div', { class: 'muted' },
+          `${d.listing.addressLine1}${d.listing.addressLine2 ? ', ' + d.listing.addressLine2 : ''}`),
+        h('div', { class: 'muted' },
+          `${d.listing.neighborhood || ''}, ${d.listing.city}, ${d.listing.state}`),
+
+        d.flaggedReasons?.length
+          ? h('div', { class: 'alert error' },
+              'Flags: ' + d.flaggedReasons.join(', '))
+          : null,
+
+        h('h3', {}, 'Checklist results'),
+        (d.template.definition.categories || []).map((cat) =>
+          h('div', { class: 'checklist-cat' },
+            h('h3', {}, cat.label),
+            cat.items.map((item) => {
+              const ans = d.items.find((i) => i.item_key === item.key);
+              return h('div', { class: 'checklist-item' },
+                h('div', { class: 'ci-label' }, item.label),
+                h('div', { class: 'ci-answers' },
+                  ans
+                    ? h('span', { class: `chip ci-${ans.answer}` }, ans.answer)
+                    : h('span', { class: 'muted' }, 'not answered'))
+              );
+            })
+          )
+        ),
+
+        h('h3', {}, `Photos (${d.photos.length})`),
+        h('div', { class: 'photo-grid' },
+          d.photos.map((p) =>
+            h('div', { class: 'photo-tile' },
+              h('img', {
+                src: p.url, alt: '',
+                onclick: () => window.open(p.url, '_blank'),
+              }),
+              p.distanceToPropertyM != null
+                ? h('span', { class: 'cover-badge' },
+                    `${Math.round(p.distanceToPropertyM)}m`)
+                : null,
+              p.category
+                ? h('span', { class: 'cover-badge', style: { left: 'auto', right: '6px' } }, p.category)
+                : null
+            )
+          )
+        )
+      ),
+      h('aside', { class: 'detail-side' },
+        h('div', { class: 'card flat' },
+          h('h2', {}, 'Score'),
+          h('div', { style: { fontSize: '36px', fontWeight: '700' } },
+            `${d.overrideScore ?? d.score}/100`),
+          d.overrideScore != null
+            ? h('div', { class: 'muted small' },
+                `Overridden from ${d.score}`)
+            : null
+        ),
+        h('div', { class: 'card flat' },
+          h('h2', {}, 'Inspector'),
+          h('div', {}, d.inspector
+            ? `${d.inspector.firstName} ${d.inspector.lastName}`
+            : '—'),
+          h('div', { class: 'muted small' }, d.inspector?.phone)
+        ),
+        h('div', { class: 'card flat' },
+          h('h2', {}, 'Visit integrity'),
+          h('div', { class: 'info-row' },
+            h('div', { class: 'info-label' }, 'Distance'),
+            h('div', { class: 'info-value' },
+              d.distanceToPropertyM != null
+                ? `${Math.round(d.distanceToPropertyM)}m`
+                : '—')),
+          h('div', { class: 'info-row' },
+            h('div', { class: 'info-label' }, 'Duration'),
+            h('div', { class: 'info-value' },
+              d.durationSeconds ? `${Math.round(d.durationSeconds / 60)} min` : '—')),
+          h('div', { class: 'info-row' },
+            h('div', { class: 'info-label' }, 'Selfie'),
+            h('div', { class: 'info-value' },
+              d.selfieUrl
+                ? h('img', {
+                    src: d.selfieUrl, alt: '',
+                    style: { width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', cursor: 'zoom-in' },
+                    onclick: () => window.open(d.selfieUrl, '_blank'),
+                  })
+                : '—'))
+        ),
+        d.status === 'submitted'
+          ? h('div', { class: 'review-actions' },
+              h('button', { class: 'btn danger', onclick: reject }, 'Reject'),
+              h('button', { class: 'btn success', onclick: approve }, 'Approve'))
+          : null
+      )
+    )
+  );
+}
+
+/* ---------- LOADERS ---------- */
+
+export async function loadAdminInspections() {
+  const { admin, accessToken } = getState();
+  setState({ admin: { ...admin, inspections: { ...(admin.inspections || {}), loading: true } } });
+  try {
+    const res = await api.adminListInspections(accessToken, { status: 'submitted' });
+    setState({
+      admin: { ...admin, inspections: { ...admin.inspections, items: res.data, loading: false } },
+    });
+  } catch (err) {
+    setState({ admin: { ...admin, inspections: { ...admin.inspections, loading: false }, error: err.message } });
+  }
+}
+
+export async function openAdminInspection(id) {
+  const { admin, accessToken } = getState();
+  setState({ admin: { ...admin, inspections: { ...admin.inspections, view: 'detail', detail: null } } });
+  try {
+    const d = await api.adminGetInspection(accessToken, id);
+    setState({ admin: { ...admin, inspections: { ...admin.inspections, detail: d } } });
+  } catch (err) {
+    setState({ admin: { ...admin, error: err.message } });
+  }
+}
