@@ -17,6 +17,8 @@ import listingRoutes from './routes/listing.routes.js';
 import adminListingRoutes from './routes/adminListing.routes.js';
 import mapRoutes from './routes/map.routes.js';
 import savedSearchRoutes from './routes/savedSearch.routes.js';
+import inspectorRoutes from './routes/inspector.routes.js';
+import adminInspectionRoutes from './routes/adminInspection.routes.js';
 
 fs.mkdirSync(config.uploads.dir, { recursive: true });
 
@@ -58,6 +60,9 @@ app.use('/api/listings',          listingRoutes);
 app.use('/api/admin/listings',    adminListingRoutes);
 app.use('/api/map', mapRoutes);
 app.use('/api/saved-searches', savedSearchRoutes);
+
+app.use('/api/inspector', inspectorRoutes);
+app.use('/api/admin/inspections', adminInspectionRoutes);
 
 
 app.use(notFound);
