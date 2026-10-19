@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as host from '../controllers/host.controller.js';
 import { upload } from '../services/media.service.js';
+import * as hostInspection from '../controllers/hostInspection.controller.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -26,5 +27,9 @@ router.post('/listings/:id/media/:mediaId/cover',
 router.get('/listings/:id/availability', asyncHandler(host.getAvailability));
 router.post('/listings/:id/availability/bulk', asyncHandler(host.bulkUpdateAvailability));
 router.post('/listings/:id/availability/clear-overrides', asyncHandler(host.clearAvailabilityOverrides));
+
+router.post('/listings/:listingId/request-inspection', asyncHandler(hostInspection.request));
+router.get('/listings/:listingId/inspections',         asyncHandler(hostInspection.listForListing));
+router.get('/inspections/:id',                          asyncHandler(hostInspection.detail));
 
 export default router;
