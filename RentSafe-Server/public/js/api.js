@@ -111,6 +111,46 @@ listSavedSearches: (t) => request('/saved-searches', { token: t }),
 deleteSavedSearch: (t, id) =>
   request(`/saved-searches/${id}`, { method: 'DELETE', token: t }),
 
+
+// -------------------------> Inspections
+// Inspector
+inspectorProfile: (t) => request('/inspector/profile', { token: t }),
+inspectorUpdateProfile: (t, body) => request('/inspector/profile', { method: 'PATCH', body, token: t }),
+inspectorQueue: (t) => request('/inspector/queue', { token: t }),
+inspectorHistory: (t) => request('/inspector/history', { token: t }),
+inspectorEarnings: (t) => request('/inspector/earnings', { token: t }),
+inspectorGetInspection: (t, id) => request(`/inspector/inspections/${id}`, { token: t }),
+inspectorAccept: (t, id) => request(`/inspector/inspections/${id}/accept`, { method: 'POST', token: t }),
+inspectorStart: (t, id, body) => request(`/inspector/inspections/${id}/start`, { method: 'POST', body, token: t }),
+inspectorUploadPhoto: (t, id, fd) => request(`/inspector/inspections/${id}/photos`, { method: 'POST', body: fd, token: t, isForm: true }),
+inspectorSubmit: (t, id, body) => request(`/inspector/inspections/${id}/submit`, { method: 'POST', body, token: t }),
+
+// Admin
+adminListInspections: (t, params) =>
+  request(`/admin/inspections?${new URLSearchParams(params)}`, { token: t }),
+adminGetInspection: (t, id) => request(`/admin/inspections/${id}`, { token: t }),
+adminApproveInspection: (t, id, body) =>
+  request(`/admin/inspections/${id}/approve`, { method: 'POST', body, token: t }),
+adminRejectInspection: (t, id, body) =>
+  request(`/admin/inspections/${id}/reject`, { method: 'POST', body, token: t }),
+adminAssignInspector: (t, id, body) =>
+  request(`/admin/inspections/${id}/assign`, { method: 'POST', body, token: t }),
+adminListInspectors: (t) => request('/admin/inspections/inspectors', { token: t }),
+adminGrantInspector: (t, userId, body) =>
+  request(`/admin/inspections/inspectors/${userId}/grant`, { method: 'POST', body, token: t }),
+adminRevokeInspector: (t, userId) =>
+  request(`/admin/inspections/inspectors/${userId}/revoke`, { method: 'POST', token: t }),
+
+// Host
+hostRequestInspection: (t, listingId) =>
+  request(`/host/listings/${listingId}/request-inspection`, { method: 'POST', token: t }),
+hostListInspections: (t, listingId) =>
+  request(`/host/listings/${listingId}/inspections`, { token: t }),
+
+// Public
+publicInspectionSummary: (t, id) =>
+  request(`/listings/${id}/inspection-summary`, { token: t }),
+
 };
 
 
