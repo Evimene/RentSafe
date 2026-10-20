@@ -18,6 +18,18 @@ const STATUS_LABEL = {
   archived: 'Archived',
 };
 
+
+async function requestInspection(listingId) {
+  if (!confirm('Request an inspector to visit and verify this listing? This is free for you.')) return;
+  try {
+    await api.hostRequestInspection(getState().accessToken, listingId);
+    setState({ host: { ...getState().host, flash: 'Inspection requested. An inspector will be assigned shortly.' } });
+    loadHostListings();
+  } catch (err) {
+    setState({ host: { ...getState().host, error: err.message } });
+  }
+}
+
 /* ============================================================
    HOST DASHBOARD
    ============================================================ */
