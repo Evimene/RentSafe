@@ -74,6 +74,15 @@ export function HostDashboard() {
                 onclick: () => openHostCalendar(it.id, it.title),
               }, '📅 Calendar') : null,
 
+              it.status === 'active'
+                ? h('button', {
+                  class: 'btn ghost tiny',
+                  onclick: () => requestInspection(it.id),
+                }, it.verificationScore > 0
+                  ? `✓ Verified (${it.verificationScore})`
+                  : '📋 Request verification')
+                : null,
+
               (it.status === 'draft' || it.status === 'rejected') && it.mediaCount >= 3
                 ? h('button', {
                   class: 'btn primary tiny',
