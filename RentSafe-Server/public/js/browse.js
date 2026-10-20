@@ -211,6 +211,7 @@ export function ListingDetail() {
             `${d.location.neighborhood || ''}${d.location.neighborhood ? ', ' : ''}${d.location.city}, ${d.location.state}`),
           d.verificationScore >= 70 ? h('span', { class: 'verified-badge' }, '✓ Verified by RentSafe') : null
         ),
+        h('div', { class: 'verified-inline', id: 'verified-inline' }, ''),
         h('div', { class: 'detail-specs' },
           h('span', {}, `${d.listingType.replace(/_/g, ' ')}`),
           h('span', {}, `${d.bedrooms} bd · ${d.beds} bed · ${d.bathrooms} bath`),
