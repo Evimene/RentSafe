@@ -67,6 +67,7 @@ export function AdminShell({ children }) {
         navItem('kyc_list', 'KYC queue', admin.stats?.pending || 0),
         navItem('audit', 'Audit log'),
         navItem('listing_list', 'Listings', admin.listings?.total || 0),
+        navItem('inspection_list', 'Inspections', admin.inspections?.items?.length || 0),
       ),
       h('div', { class: 'admin-me' },
         h('div', { class: 'avatar' }, initials(user)),

@@ -221,6 +221,8 @@ function LoginScreen() {
           if (isAdmin(res.user)) {
             loadStats();
             loadKycList();
+          } else if (isInspector(res.user)) {
+            loadInspectorQueue();
           }
           loadKyc();
         } catch (err) {
@@ -357,7 +359,7 @@ function App() {
       case 'earnings': screen = InspectorEarnings(); break;
       case 'profile': screen = InspectorProfile(); break;
       case 'detail': screen = InspectorInspectionDetail(); break;
-      case 'queue':
+      case 'queue': 
       default: screen = InspectorQueue();
     }
     return InspectorShell({ children: screen });
@@ -439,6 +441,8 @@ store.subscribe(() => rerender());
     if (isAdmin(me.user)) {
       loadStats();
       loadKycList();
+    } else if (isInspector(me.user)) {
+      loadInspectorQueue();
     }
     loadKyc();
   } catch {
