@@ -76,6 +76,22 @@ export const store = createStore({
     },
     error: null, flash: null,
   },
+
+
+
+  inspector: {
+    view: 'queue',                // 'queue' | 'history' | 'earnings' | 'profile' | 'detail'
+    queue: [],
+    history: [],
+    earnings: [],
+    profile: null,
+    detail: null,
+    form: null,                   // { answers, photos, selfieUrl, uploading }
+    error: null,
+    flash: null,
+  },
+  // In admin block, add:
+  inspections: { view: 'list', items: [], detail: null, loading: false },
 });
 
 export const setState = (patch) => store.set(patch);
