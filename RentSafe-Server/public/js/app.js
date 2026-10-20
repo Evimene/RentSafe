@@ -5,6 +5,13 @@ import {
   AdminShell, AdminKycList, AdminKycDetail, AdminAudit,
   loadStats, loadKycList, openKycDetail, loadAudit,
 } from './admin.js';
+import {
+  InspectorShell, InspectorQueue, InspectorHistory,
+  InspectorEarnings, InspectorProfile, InspectorInspectionDetail,
+  loadQueue as loadInspectorQueue,
+} from './inspector.js';
+
+import { AdminInspections, AdminInspectionDetail, loadAdminInspections } from './admin.js';
 
 //---------------> helpers
 const navigate = (route) => setState({ route, error: null, flash: null });
@@ -29,6 +36,10 @@ function Alert() {
 }
 
 const Spinner = () => h('span', { class: 'spinner' });
+
+function isInspector(user) {
+  return (user?.roles || []).includes('inspector');
+}
 
 //------------------> header
 function Header() {
@@ -324,13 +335,30 @@ function isAdmin(user) {
 
 // -------------> Root
 function App() {
-  const { route, accessToken, user, admin } = getState();
+  const { route, accessToken, user, admin, inspector, browse } = getState();
   const publicRoutes = new Set(['register', 'verify', 'login']);
+
+
+  // Inspector routes
+  if (accessToken && isInspector(user) && route === 'inspector') {
+    let screen;
+    switch (inspector.view) {
+      case 'history':  screen = InspectorHistory(); break;
+      case 'earnings': screen = InspectorEarnings(); break;
+      case 'profile':  screen = InspectorProfile(); break;
+      case 'detail':   screen = InspectorInspectionDetail(); break;
+      case 'queue':
+      default:         screen = InspectorQueue();
+    }
+    return InspectorShell({ children: screen });
+  }
 
   // Admin routes
   if (accessToken && isAdmin(user) && route.startsWith('admin')) {
     let screen;
     switch (admin.view) {
+      case 'inspection_detail': screen = AdminInspectionDetail(); break;
+      case 'inspection_list':   screen = AdminInspections(); break;
       case 'kyc_detail': screen = AdminKycDetail(); break;
       case 'audit': screen = AdminAudit(); break;
       case 'host': screen = HostDashboard(); break;
@@ -375,7 +403,7 @@ function App() {
 // --------------> Boot
 const root = document.getElementById('root');
 const rerender = mount(App, root);
-const originalRender = renderFn; 
+const originalRender = renderFn;
 store.subscribe(() => rerender());
 
 // Try silent refresh on boot
