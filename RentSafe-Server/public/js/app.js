@@ -60,6 +60,16 @@ function Header() {
             }, 'Admin')
             : null,
 
+          isInspector(user)
+            ? h('button', {
+              class: 'link',
+              onclick: () => {
+                setState({ route: 'inspector', inspector: { ...getState().inspector, view: 'queue' } });
+                loadInspectorQueue();
+              },
+            }, 'Inspector')
+            : null,
+
           h('button', { class: 'link', onclick: () => { setState({ route: 'browse' }); runSearch(); } }, 'Browse'),
           h('button', { class: 'link', onclick: () => { setState({ route: 'host' }); loadHostListings(); } }, 'Hosting'),
           h('span', {}, user?.firstName || 'User'),
@@ -343,12 +353,12 @@ function App() {
   if (accessToken && isInspector(user) && route === 'inspector') {
     let screen;
     switch (inspector.view) {
-      case 'history':  screen = InspectorHistory(); break;
+      case 'history': screen = InspectorHistory(); break;
       case 'earnings': screen = InspectorEarnings(); break;
-      case 'profile':  screen = InspectorProfile(); break;
-      case 'detail':   screen = InspectorInspectionDetail(); break;
+      case 'profile': screen = InspectorProfile(); break;
+      case 'detail': screen = InspectorInspectionDetail(); break;
       case 'queue':
-      default:         screen = InspectorQueue();
+      default: screen = InspectorQueue();
     }
     return InspectorShell({ children: screen });
   }
@@ -358,7 +368,7 @@ function App() {
     let screen;
     switch (admin.view) {
       case 'inspection_detail': screen = AdminInspectionDetail(); break;
-      case 'inspection_list':   screen = AdminInspections(); break;
+      case 'inspection_list': screen = AdminInspections(); break;
       case 'kyc_detail': screen = AdminKycDetail(); break;
       case 'audit': screen = AdminAudit(); break;
       case 'host': screen = HostDashboard(); break;
