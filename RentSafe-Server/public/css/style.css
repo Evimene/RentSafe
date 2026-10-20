@@ -1355,3 +1355,119 @@ textarea {
 .nearby-item:hover { border-color: var(--primary); }
 .nearby-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
 .nearby-item .strong { font-weight: 600; font-size: 13px; }
+
+
+
+/* ============================================================
+   INSPECTIONS
+   ============================================================ */
+
+.inspection-list {
+  display: grid;
+  gap: 12px;
+}
+
+.inspection-card {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.inspection-card:hover { border-color: var(--primary); }
+
+.ic-cover { width: 140px; height: 100px; border-radius: 8px; overflow: hidden; background: #0c0f13; }
+.ic-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ic-body { display: grid; gap: 6px; align-content: start; }
+.ic-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ic-head h3 { margin: 0; font-size: 15px; }
+.ic-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted); }
+
+.pill.assigned,
+.pill.scheduled   { background: #1a2740; color: #84b6ff; }
+.pill.in_progress { background: #3a2f00; color: #ffcc66; }
+.pill.submitted   { background: #1f3a5a; color: #b8d4ff; }
+.pill.approved    { background: #0e3a22; color: #71e29e; }
+.pill.rejected,
+.pill.cancelled,
+.pill.expired     { background: #3a0e0e; color: #ff8a8b; }
+.pill.paid        { background: #0e3a22; color: #71e29e; }
+.pill.pending     { background: #3a2f00; color: #ffcc66; }
+
+/* Checklist */
+.checklist-cat {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.checklist-cat h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.checklist-item:last-child { border-bottom: none; }
+.ci-label { flex: 1; font-size: 13.5px; }
+.ci-answers { display: flex; gap: 4px; }
+.ci-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #0c0f13;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ci-btn:hover { background: #1a2026; color: var(--text); }
+.ci-btn.active.ci-pass     { background: #0e3a22; color: #71e29e; border-color: #1e7a4a; }
+.ci-btn.active.ci-partial  { background: #3a2f00; color: #ffcc66; border-color: #7a5f00; }
+.ci-btn.active.ci-fail     { background: #3a0e0e; color: #ff8a8b; border-color: #7a1e1e; }
+.ci-btn.active.ci-na       { background: #1c2228; color: var(--text); }
+
+.chip.ci-pass    { background: #0e3a22; color: #71e29e; }
+.chip.ci-partial { background: #3a2f00; color: #ffcc66; }
+.chip.ci-fail    { background: #3a0e0e; color: #ff8a8b; }
+.chip.ci-na      { background: #1c2228; color: var(--muted); }
+.chip.warn       { background: #3a2f00; color: #ffcc66; }
+
+.ci-photo-btn { cursor: pointer; }
+.ci-photo-btn .chip { background: #0e3a22; color: #71e29e; }
+
+/* Selfie zone */
+.selfie-zone { display: grid; gap: 12px; }
+.selfie-preview { display: flex; justify-content: center; }
+.selfie-preview img {
+  width: 140px; height: 140px; object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid var(--primary);
+}
+
+.photos-section { margin-top: 16px; }
+.photos-section h3 { margin-bottom: 8px; }
+.upload-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 2px dashed var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  transition: border-color .15s;
+}
+.upload-tile:hover { border-color: var(--primary); color: var(--text); }
+
+/* Verified badge on listing detail */
+.verified-inline { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+
+.text-ok { color: #71e29e; }
+.text-bad { color: #ff8a8b; }
