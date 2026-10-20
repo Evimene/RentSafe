@@ -172,6 +172,17 @@ export async function openListing(id) {
         }
       }
     });
+
+    api.publicInspectionSummary(accessToken, id).then((s) => {
+      if (!s.verified) return;
+      const el = document.getElementById('verified-inline');
+      if (el) {
+        el.innerHTML = `
+          <span class="verified-badge">✓ Verified ${new Date(s.verifiedAt).toLocaleDateString('en-NG')}</span>
+          <span class="muted small"> Score ${s.score}/100</span>
+        `;
+      }
+    });
   } catch (err) {
     setState({ browse: { ...browse, view: 'detail', loading: false, error: err.message } });
   }
