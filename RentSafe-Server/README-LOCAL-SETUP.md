@@ -154,3 +154,55 @@ HOST                              ADMIN                         GUEST
  │ 7. Check-in (code)              │                             │
  │                                 │                             │
  │ 8. Payout after 24h             │                             │
+
+
+
+
+## Booking Creation → Charge → Checkout → Webhook → Confirm → Check-In → Escrow Release
+
+This is the transaction spine. Everything else — listings, KYC, inspections, calendars — feeds into this one flow. I'm wiring it end-to-end with the honesty and safety mechanisms that make the escrow model actually defensible.
+
+#### The complete journey:
+
+text
+GUEST                     PLATFORM                     HOST
+ │                           │                           │
+ │ 1. Select dates + guests  │                           │
+ │ 2. POST /bookings         │                           │
+ │    (server quotes price)  │                           │
+ ├──────────────────────────►│                           │
+ │                           │ Create pending_payment    │
+ │                           │ with expires_at = +30m    │
+ │                           │ → dates LOCKED            │
+ │                           │                           │
+ │ 3. POST /bookings/:id/charge                          │
+ ├──────────────────────────►│                           │
+ │                           │ Initialize Paystack       │
+ │                           │ Create escrow_hold        │
+ │ 4. Redirect to Paystack   │                           │
+ │◄──────────────────────────┤                           │
+ │                           │                           │
+ │ 5. Pay ₦X                 │                           │
+ ├──────────────────────────►│                           │
+ │                           │                           │
+ │                           │ 6. charge.success webhook │
+ │                           │    → verify with Paystack │
+ │                           │    → amount check         │
+ │                           │    → status=confirmed     │
+ │                           │    → generate check_in_code│
+ │                           │    → release_eligible_at  │
+ │                           │      = check_in + 24h     │
+ │                           │                           │
+ │ 7. Arrive at property     │                           │
+ │ 8. Show/enter check-in code ────────────────────────► │
+ │                           │ Host confirms check-in    │
+ │                           │ status=checked_in         │
+ │                           │                           │
+ │                           │ 9. Cron at release_eligible_at
+ │                           │    → initiate transfer    │
+ │                           │                           │
+ │                           │ 10. transfer.success      │
+ │                           │     → payout=success      │
+ │                           ├──────────────────────────►│
+ │                           │                           │ Funds in bank
+ 
