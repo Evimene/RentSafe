@@ -67,4 +67,17 @@ export const config = {
     dir: process.env.UPLOAD_DIR || 'uploads',
     maxBytes: readPositiveInteger(process.env.UPLOAD_MAX_BYTES, 5 * 1024 * 1024, 'UPLOAD_MAX_BYTES'),
   },
+
+
+  bookings: {
+    paymentWindowMinutes: Number(process.env.BOOKING_PAYMENT_WINDOW_MIN || 30),
+    checkinReminderHours: [24, 1],           // reminder offsets
+    releaseDelayHours: 24,                   // after check_in_date
+    platformFeePercent: 15.5,
+    cancellationPolicies: {
+      flexible: { refundBeforeHours: 24, refundPct: 100 },
+      moderate: { refundBeforeHours: 120, refundPct: 100 },
+      strict:   { refundBeforeHours: 168, refundPct: 50 },
+    },
+  },
 };
